@@ -1,31 +1,37 @@
-// const fs = require("fs");
+const catchAsync = require("../utils/catchAsync");
+const User = require("../models/userModel");
 
-exports.getAllUsers = (req, res) => {
-  res.json({
-    message: "getAllUsers",
+exports.getAllUsers = catchAsync(async (req, res) => {
+  const users = await User.find();
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      users: users,
+    },
   });
-};
+});
 
-exports.createUser = (req, res) => {
+exports.createUser = catchAsync(async (req, res) => {
   res.json({
     message: "createUser",
   });
-};
+});
 
-exports.getUser = (req, res) => {
+exports.getUser = catchAsync(async (req, res) => {
   res.json({
     message: "getUser",
   });
-};
+});
 
-exports.updateUser = (req, res) => {
+exports.updateUser = catchAsync(async (req, res) => {
   res.json({
     message: "updateUser",
   });
-};
+});
 
-exports.deleteUser = (req, res) => {
+exports.deleteUser = catchAsync(async (req, res) => {
   res.json({
     message: "deleteUser",
   });
-};
+});

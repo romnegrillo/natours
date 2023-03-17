@@ -74,7 +74,7 @@ exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
   ]);
 
   res.status(200).send({
-    message: "status",
+    message: "success",
     data: {
       plan: plan,
     },
