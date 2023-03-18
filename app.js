@@ -4,7 +4,6 @@ const morgan = require("morgan");
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
 
-console.log("DEBUG");
 console.log(globalErrorHandler);
 
 const tourRouter = require("./routes/tourRoutes");

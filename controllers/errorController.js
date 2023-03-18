@@ -17,6 +17,16 @@ const handleValidationErrorDB = (err) => {
   return new AppError(message, 400);
 };
 
+const handleJsonWebTokenError = () => {
+  const message = "Invalid token! Please login again!";
+  return new AppError(message, 401);
+};
+
+const handleTokenExpiredError = () => {
+  const message = "Token already expired! Please login again!";
+  return new AppError(message, 401);
+};
+
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
     status: err.status,
@@ -28,6 +38,7 @@ const sendErrorDev = (err, res) => {
 
 const sendErrorProd = (err, res) => {
   // Operational error/trusted error: send message to client.
+
   if (err.isOperational) {
     res.status(err.statusCode).json({
       status: err.status,
@@ -55,7 +66,11 @@ const errorController = (err, req, res, next) => {
   if (mode === "development") {
     sendErrorDev(err, res);
   } else if (mode === "production") {
-    let modifiedError = { ...err };
+    // Spread operator does not work, it doesn't copy
+    // the properties and methods of the original error object.
+    //let modifiedError = { ...err };
+
+    let modifiedError = Object.create(err);
 
     // Add a condition for a specific error that you expect.
     // Modify it using the AppError class then send it back
@@ -66,6 +81,10 @@ const errorController = (err, req, res, next) => {
       modifiedError = handleDuplicateFieldsDB(err);
     } else if (err.name === "ValidationError") {
       modifiedError = handleValidationErrorDB(err);
+    } else if (err.name === "JsonWebTokenError") {
+      modifiedError = handleJsonWebTokenError();
+    } else if (err.name === "TokenExpiredError") {
+      modifiedError = handleTokenExpiredError();
     }
 
     sendErrorProd(modifiedError, res);
