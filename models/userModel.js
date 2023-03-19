@@ -64,13 +64,20 @@ userSchema.methods.isPasswordCorrect = async function (
 userSchema.methods.isPasswordChanged = async function (jwtTimeStamp) {
   // If passwordChangedAt property does not exists in the current user,
   // password has not been changed yet, return false immediately.
-  if (!this.passwordChangedAt) {
+  if (this.passwordChangedAt) {
     // Check if password changed time is greater than the jwtTimeStamp.
     // If it is, that means the password has been changed, return true,
     // else return false.
-    console.log(jwtTimeStamp);
 
-    return true;
+    // Convert the passwordChangedAt to to timestamp format.
+    const passwordChangedAtTimeStamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+
+    console.log(passwordChangedAtTimeStamp, jwtTimeStamp);
+
+    return passwordChangedAtTimeStamp > jwtTimeStamp;
   }
 
   return false;
