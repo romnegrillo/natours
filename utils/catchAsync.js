@@ -4,9 +4,11 @@
 // to the next function so it will call the
 // global error handler.
 const catchAsync = (fn) => {
-  return (req, res, next) => {
+  const wrapper = (req, res, next) => {
     fn(req, res, next).catch((err) => next(err));
   };
+
+  return wrapper;
 };
 
 module.exports = catchAsync;
