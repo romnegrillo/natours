@@ -99,3 +99,19 @@ exports.protectRoute = catchAsync(async (req, res, next) => {
   req.user = user;
   next();
 });
+
+exports.restrictRouteTo = (...roles) => {
+  const wrapper = (req, res, next) => {
+    const isAuthorized = roles.includes(req.user.role);
+
+    if (!isAuthorized) {
+      return next(
+        new AppError("You don't have permission to access this route.", 401)
+      );
+    }
+
+    next();
+  };
+
+  return wrapper;
+};
