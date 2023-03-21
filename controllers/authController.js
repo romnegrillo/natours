@@ -66,8 +66,7 @@ exports.protectRoute = catchAsync(async (req, res, next) => {
 
   if (!token) {
     return next(
-      new Error("You are not logged in. Please login to get access!"),
-      401
+      new AppError("You are not logged in. Please login to get access!", 401)
     );
   }
 
@@ -198,4 +197,9 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.updatePassword = (req, res, next) => {};
+exports.updatePassword = (req, res, next) => {
+  console.log(req.user);
+  res.status(200).json({
+    message: "updatePassword",
+  });
+};
