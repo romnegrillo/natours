@@ -15,11 +15,11 @@ const sendEmail = async (options) => {
 
   // 2.) Define email options.
   const mailOptions = {
-    from: "natours <natours.com",
+    from: "natours <natours.com>",
     to: options.email,
     subject: options.subject,
     text: options.message,
-    // html:
+    html: "<h1>Hello world!</h1>",
   };
 
   // 3.) Send email.

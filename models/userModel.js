@@ -52,7 +52,7 @@ userSchema.pre("save", async function (next) {
     return next();
   }
 
-  // Has the password and delete the password confirmation.
+  // Hash the password and delete the password confirmation.
   this.password = await bcrypt.hash(this.password, 12);
   this.passwordConfirm = undefined;
 
@@ -83,8 +83,6 @@ userSchema.methods.isPasswordChanged = async function (jwtTimeStamp) {
       10
     );
 
-    console.log(passwordChangedAtTimeStamp, jwtTimeStamp);
-
     return passwordChangedAtTimeStamp > jwtTimeStamp;
   }
 
@@ -105,6 +103,16 @@ userSchema.methods.createRandomResetToken = function () {
   return resetToken;
 };
 
+// If password is changed, update the passwordChangedAt time property.
+userSchema.pre("save", function (next) {
+  if (!this.isModified("password") || this.isNew) {
+    return next();
+  }
+
+  this.passwordChangedAt = Date.now();
+
+  next();
+});
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;
