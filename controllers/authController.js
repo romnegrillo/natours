@@ -1,9 +1,11 @@
 const util = require("util");
-const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
+
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const sendEmail = require("../utils/email");
+
 const User = require("../models/userModel");
 
 const signToken = (userId) => {
@@ -15,14 +17,14 @@ const signToken = (userId) => {
 };
 
 exports.signUp = catchAsync(async (req, res, next) => {
-  const newUser = await User.create(req.body);
-  const token = signToken(newUser._id);
+  const user = await User.create(req.body);
+  const token = signToken(user._id);
 
   res.status(201).send({
     message: "status",
     token: token,
     data: {
-      user: newUser,
+      user: user,
     },
   });
 });
@@ -197,9 +199,44 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.updatePassword = (req, res, next) => {
-  console.log(req.user);
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  // 1.) Get logged in user.
+  // We need to select the password manually we disabled to return it in
+  // the userModel.js.
+  const loggedInUser = await User.findOne({ _id: req.user.id }).select(
+    "+password"
+  );
+
+  // 2.) Get supplied current password and check if it is correct.
+  const { passwordCurrent } = req.body;
+
+  if (!passwordCurrent) {
+    return next(new AppError("Please provide your old password.", 401));
+  }
+
+  if (
+    !(await loggedInUser.isPasswordCorrect(
+      passwordCurrent,
+      loggedInUser.password
+    ))
+  ) {
+    return next(new AppError("Old password is incorrect!", 400));
+  }
+
+  // 4.) Update password. Validators are in userModel.js.
+  const { passwordNew, passwordConfirmNew } = req.body;
+
+  loggedInUser.password = passwordNew;
+  loggedInUser.passwordConfirm = passwordConfirmNew;
+
+  await loggedInUser.save();
+
+  // 5.) Generate new authorization token.
+  const token = signToken(loggedInUser.id);
+
   res.status(200).json({
-    message: "updatePassword",
+    status: "success",
+    message: "Your password has been updated.",
+    token: token,
   });
-};
+});
