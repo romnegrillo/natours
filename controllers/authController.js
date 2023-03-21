@@ -1,11 +1,9 @@
 const util = require("util");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
-
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const sendEmail = require("../utils/email");
-
 const User = require("../models/userModel");
 
 const signToken = (userId) => {
@@ -17,7 +15,18 @@ const signToken = (userId) => {
 };
 
 exports.signUp = catchAsync(async (req, res, next) => {
-  const user = await User.create(req.body);
+  // Get the required data and create it in the database.
+  // Validators are in the model.
+  // Password encryption is in the model as well.
+  const { name, email, password, passwordConfirm } = req.body;
+
+  const user = await User.create({
+    name: name,
+    email: email,
+    password: password,
+    passwordConfirm: passwordConfirm,
+  });
+
   const token = signToken(user._id);
 
   res.status(201).send({
@@ -30,9 +39,9 @@ exports.signUp = catchAsync(async (req, res, next) => {
 });
 
 exports.login = catchAsync(async (req, res, next) => {
+  // 1.) Check if email and password exists.
   const { email, password } = req.body;
 
-  // 1.) Check if email and password exits.
   if (!email || !password) {
     return next(
       new AppError("Please provide a valid email and password!", 400)
@@ -40,6 +49,8 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   // 2.) Check if user exists and password is correct.
+  // We select the password explicitly because it is
+  // hidden by default from the model (select: false).
   const user = await User.findOne({ email: email }).select("+password");
 
   if (!user || !(await user.isPasswordCorrect(password, user.password))) {
@@ -57,12 +68,10 @@ exports.login = catchAsync(async (req, res, next) => {
 
 exports.protectRoute = catchAsync(async (req, res, next) => {
   // 1.) Check if token exists.
+  const authorizationHeader = req.headers.authorization;
   let token;
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
+  if (authorizationHeader && authorizationHeader.startsWith("Bearer")) {
     token = req.headers.authorization.split(" ")[1];
   }
 
@@ -72,19 +81,16 @@ exports.protectRoute = catchAsync(async (req, res, next) => {
     );
   }
 
-  // 2.) Check if token is valid.
+  // 2.) Check if token is valid by finding the associated user with it.
   const decoded = await util.promisify(jwt.verify)(
     token,
     process.env.JWT_SECRET
   );
 
-  // 3.) Check if user exists with that token.
   const user = await User.findOne({ _id: decoded.id });
 
   if (!user) {
-    return next(
-      new AppError("The id belonging to this user does not exists!", 401)
-    );
+    return next(new AppError("Invalid token!", 401));
   }
 
   // 4.) Check if user changed password after token was issued.
@@ -99,7 +105,10 @@ exports.protectRoute = catchAsync(async (req, res, next) => {
     );
   }
 
+  // 5.) Save the user object for the next in the middleware
+  // so they'll have copy of the current authenticated user.
   req.user = user;
+
   next();
 });
 
@@ -128,12 +137,10 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     return next(new AppError("User with that email is not registered.", 401));
   }
 
-  // 2.) Generate password reset token.
+  // 2.) Generate password reset token and its expiry time.
   const token = user.createRandomResetToken();
 
   // 3.) Save password reset token to the current user instance.
-  // The token and its expiration time is already saved in the
-  // createRandomResetToken function.
   // Validator will be off so the required files won't trigger errors.
   await user.save({ validateBeforeSave: false });
 
@@ -144,6 +151,9 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
   const message = `Forgot your password? Submit a PATCH request with your new password and password confirm to ${resetUrl}. This link is only available for 10 minutes.`;
 
+  // We manually catch the error here rather than allowing the global error
+  // handler to do it because we need to clear the password reset token
+  // and its expiration time when an error happens.
   try {
     await sendEmail({
       email: user.email,
@@ -169,10 +179,12 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 exports.resetPassword = catchAsync(async (req, res, next) => {
   // 1.) Get user based on token and check if the the time is greater than its expiration.
   const { passwordResetToken } = req.params;
+
   const hashedToken = crypto
     .createHash("sha256")
     .update(passwordResetToken)
     .digest("hex");
+
   const user = await User.findOne({
     passwordResetToken: hashedToken,
     passwordResetExpires: { $gt: Date.now() },
@@ -201,13 +213,13 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
   // 1.) Get logged in user.
-  // We need to select the password manually we disabled to return it in
-  // the userModel.js.
+  // We select the password explicitly because it is
+  // hidden by default from the model (select: false).
   const loggedInUser = await User.findOne({ _id: req.user.id }).select(
     "+password"
   );
 
-  // 2.) Get supplied current password and check if it is correct.
+  // 2.) Getcurrent password and check if it is correct.
   const { passwordCurrent } = req.body;
 
   if (!passwordCurrent) {
@@ -223,7 +235,8 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
     return next(new AppError("Old password is incorrect!", 400));
   }
 
-  // 4.) Update password. Validators are in userModel.js.
+  // 4.) Update password.
+  // Validators are in the model.
   const { passwordNew, passwordConfirmNew } = req.body;
 
   loggedInUser.password = passwordNew;
