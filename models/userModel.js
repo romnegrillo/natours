@@ -43,6 +43,11 @@ const userSchema = new mongoose.Schema({
   },
   passwordResetToken: String,
   passwordResetExpires: Date,
+  isActive: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
 });
 
 // Called when before save() or create() in User model in the controller.
@@ -113,6 +118,13 @@ userSchema.pre("save", function (next) {
 
   next();
 });
+
+userSchema.pre(/^find/, function (next) {
+  this.find({ isActive: true });
+
+  next();
+});
+
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;

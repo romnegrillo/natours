@@ -4,6 +4,7 @@ const authController = require("../controllers/authController");
 
 const userRouter = express.Router();
 
+// Authentication and authorization-related routes.
 userRouter.post("/signup", authController.signUp);
 userRouter.post("/login", authController.login);
 userRouter.post("/forgotPassword", authController.forgotPassword);
@@ -12,9 +13,24 @@ userRouter.patch(
   authController.resetPassword
 );
 userRouter.post(
-  "/updatePassword",
+  "/updateMyPassword",
   authController.protectRoute,
-  authController.updatePassword
+  authController.updateMyPassword
+);
+
+// User-related routes.
+// The authentication is in different controller to
+// separate the routes that needs token based logic.
+userRouter.post(
+  "/updateMyProfile",
+  authController.protectRoute,
+  userController.updateMyProfile
+);
+
+userRouter.delete(
+  "/deleteMyProfile",
+  authController.protectRoute,
+  userController.deleteMyProfile
 );
 
 userRouter

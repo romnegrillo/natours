@@ -211,7 +211,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.updatePassword = catchAsync(async (req, res, next) => {
+exports.updateMyPassword = catchAsync(async (req, res, next) => {
   // 1.) Get logged in user.
   // We select the password explicitly because it is
   // hidden by default from the model (select: false).
