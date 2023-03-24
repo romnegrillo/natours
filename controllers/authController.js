@@ -4,15 +4,8 @@ const jwt = require("jsonwebtoken");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const sendEmail = require("../utils/email");
+const createSendJwtToken = require("../utils/createSendJwtToken");
 const User = require("../models/userModel");
-
-const signToken = (userId) => {
-  const signedToken = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
-  });
-
-  return signedToken;
-};
 
 exports.signUp = catchAsync(async (req, res, next) => {
   // Get the required data and create it in the database.
@@ -27,15 +20,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
     passwordConfirm: passwordConfirm,
   });
 
-  const token = signToken(user._id);
-
-  res.status(201).send({
-    message: "status",
-    token: token,
-    data: {
-      user: user,
-    },
-  });
+  createSendJwtToken(user._id, res, 201, "Account created.");
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -58,12 +43,7 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   // 3.) If everything is correct, send token to the client.
-  const token = signToken(user._id);
-
-  res.status(200).send({
-    message: "success",
-    token: token,
-  });
+  createSendJwtToken(user._id, res, 201, "Use the JWT for authentication.");
 });
 
 exports.protectRoute = catchAsync(async (req, res, next) => {
@@ -163,7 +143,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
     res.status(200).json({
       status: "success",
-      message: "Token sent to email.",
+      message: "Password reset link has been sent to your email.",
     });
   } catch (err) {
     // Set the token and token expiration to none.
@@ -203,21 +183,20 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   await user.save();
 
   // 4.) Log the user in, send JWT.
-  const jwtToken = signToken(user.id);
 
-  res.status(200).json({
-    status: "success",
-    token: jwtToken,
-  });
+  createSendJwtToken(
+    user._id,
+    res,
+    201,
+    "Password has been reset successfully."
+  );
 });
 
 exports.updateMyPassword = catchAsync(async (req, res, next) => {
   // 1.) Get logged in user.
   // We select the password explicitly because it is
   // hidden by default from the model (select: false).
-  const loggedInUser = await User.findOne({ _id: req.user.id }).select(
-    "+password"
-  );
+  const user = await User.findOne({ _id: req.user.id }).select("+password");
 
   // 2.) Getcurrent password and check if it is correct.
   const { passwordCurrent } = req.body;
@@ -226,12 +205,7 @@ exports.updateMyPassword = catchAsync(async (req, res, next) => {
     return next(new AppError("Please provide your old password.", 401));
   }
 
-  if (
-    !(await loggedInUser.isPasswordCorrect(
-      passwordCurrent,
-      loggedInUser.password
-    ))
-  ) {
+  if (!(await user.isPasswordCorrect(passwordCurrent, user.password))) {
     return next(new AppError("Old password is incorrect!", 400));
   }
 
@@ -239,17 +213,12 @@ exports.updateMyPassword = catchAsync(async (req, res, next) => {
   // Validators are in the model.
   const { passwordNew, passwordConfirmNew } = req.body;
 
-  loggedInUser.password = passwordNew;
-  loggedInUser.passwordConfirm = passwordConfirmNew;
+  user.password = passwordNew;
+  user.passwordConfirm = passwordConfirmNew;
 
-  await loggedInUser.save();
+  await user.save();
 
   // 5.) Generate new authorization token.
-  const token = signToken(loggedInUser.id);
 
-  res.status(200).json({
-    status: "success",
-    message: "Your password has been updated.",
-    token: token,
-  });
+  createSendJwtToken(user._id, res, 201, "Your password has been updated.");
 });
