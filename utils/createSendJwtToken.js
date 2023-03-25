@@ -1,10 +1,12 @@
 const jwt = require("jsonwebtoken");
 
-const createSendJwtToken = (userId, res, statusCode, message) => {
-  const token = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+const createSendJwtToken = (user, res, statusCode, message) => {
+  // 1.) Create the token.
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 
+  // 2.) Create cookie option and send it via cookie.
   const cookieOptions = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
@@ -18,9 +20,18 @@ const createSendJwtToken = (userId, res, statusCode, message) => {
 
   res.cookie("jwt", token, cookieOptions);
 
+  // 3.) Send response hide password by setting it to undefined.
+  // This won't save it, it's just for the sake of hiding
+  // the password before sending the response.
+
+  user.password = undefined;
   res.status(statusCode).send({
     status: "success",
     message: message,
+    token: token,
+    data: {
+      user: user,
+    },
   });
 };
 

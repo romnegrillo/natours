@@ -20,7 +20,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
     passwordConfirm: passwordConfirm,
   });
 
-  createSendJwtToken(user._id, res, 201, "Account created.");
+  createSendJwtToken(user, res, 201, "Account created.");
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -43,7 +43,7 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   // 3.) If everything is correct, send token to the client.
-  createSendJwtToken(user._id, res, 201, "Use the JWT for authentication.");
+  createSendJwtToken(user, res, 201, "Use the JWT for authentication.");
 });
 
 exports.protectRoute = catchAsync(async (req, res, next) => {
@@ -184,12 +184,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   // 4.) Log the user in, send JWT.
 
-  createSendJwtToken(
-    user._id,
-    res,
-    201,
-    "Password has been reset successfully."
-  );
+  createSendJwtToken(user, res, 201, "Password has been reset successfully.");
 });
 
 exports.updateMyPassword = catchAsync(async (req, res, next) => {
@@ -220,5 +215,5 @@ exports.updateMyPassword = catchAsync(async (req, res, next) => {
 
   // 5.) Generate new authorization token.
 
-  createSendJwtToken(user._id, res, 201, "Your password has been updated.");
+  createSendJwtToken(user, res, 201, "Your password has been updated.");
 });
