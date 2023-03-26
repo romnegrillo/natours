@@ -3,24 +3,15 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const Tour = require("../models/tourModel");
 
-dotenv.config({ path: `${__dirname}/../config.env` });
+dotenv.config();
 
 const DB = process.env.DATABASE.replace(
   "<DATABASE_PASSWORD>",
   process.env.DATABASE_PASSWORD
 );
 
-mongoose
-  .connect(DB, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log("Connected to database.");
-  });
-
 const tours = JSON.parse(
-  fs.readFileSync(`${__dirname}/data/tours-simple.json`, "utf8")
+  fs.readFileSync(`${__dirname}/data/tours.json`, "utf8")
 );
 
 const insertData = async () => {
@@ -43,10 +34,19 @@ const deleteData = async () => {
   }
 };
 
-if (process.argv[2] === "--insert") {
-  insertData();
-} else if (process.argv[2] === "--delete") {
-  deleteData();
-} else {
-  console.log("Not command sent.");
-}
+mongoose
+  .connect(DB, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("Connected to database.");
+
+    if (process.argv[2] === "--insert") {
+      insertData();
+    } else if (process.argv[2] === "--delete") {
+      deleteData();
+    } else {
+      console.log("Not command sent.");
+    }
+  });

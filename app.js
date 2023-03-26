@@ -2,6 +2,8 @@ const express = require("express");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
+const mongoSanitize = require("express-mongo-sanitize");
+const xss = require("xss-clean");
 const globalErrorHandler = require("./controllers/errorController");
 const AppError = require("./utils/appError");
 
@@ -13,7 +15,6 @@ const userRouter = require("./routes/userRoutes");
 const app = express();
 
 // Global middlewares.
-app.use(express.static(`${__dirname}/dev-data/`));
 
 // 1.) Helmet for setting https headers.
 app.use(helmet());
@@ -32,7 +33,16 @@ const limiter = rateLimit({
 });
 app.use("/api/v1", limiter);
 
-// 4.) Test middleware.
+// 4.) Serving static files.
+app.use(express.static(`${__dirname}/dev-data/`));
+
+// 5.) Data sanitization for NoSQL injection.
+app.use(mongoSanitize());
+
+// 6.) Data sanitation for xss attacks.
+app.use(xss());
+
+// 7.) Test middleware.
 app.use((req, res, next) => {
   console.log("Hello from middleware.");
   next();
