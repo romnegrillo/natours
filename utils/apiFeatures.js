@@ -9,7 +9,7 @@ class APIFeatures {
     let queryObjectCopy = { ...this.queryObject };
 
     // Remove filter that has meaning in moongoose.
-    const excludedQueries = ["sort", "page", "limit", "fields"];
+    const excludedQueries = ['sort', 'page', 'limit', 'fields'];
     excludedQueries.forEach(
       (excludedQuery) => delete queryObjectCopy[excludedQuery]
     );
@@ -29,10 +29,10 @@ class APIFeatures {
 
   sort() {
     if (this.queryObject.sort) {
-      const sortString = this.queryObject.sort.split(",").join(" ");
+      const sortString = this.queryObject.sort.split(',').join(' ');
       this.query = this.query.sort(sortString);
     } else {
-      this.query = this.query.sort("-createdAt");
+      this.query = this.query.sort('-createdAt');
     }
 
     return this;
@@ -40,11 +40,11 @@ class APIFeatures {
 
   select() {
     if (this.queryObject.select) {
-      const selectString = this.queryObject.select.split(",").join(" ");
+      const selectString = this.queryObject.select.split(',').join(' ');
       this.query = this.query.select(selectString);
-      this.query = this.query.select("-__v");
+      this.query = this.query.select('-__v');
     } else {
-      this.query = this.query.select("-__v");
+      this.query = this.query.select('-__v');
     }
 
     return this;

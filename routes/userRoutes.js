@@ -1,19 +1,19 @@
-const express = require("express");
-const userController = require("../controllers/userController");
-const authController = require("../controllers/authController");
+const express = require('express');
+const userController = require('../controllers/userController');
+const authController = require('../controllers/authController');
 
 const userRouter = express.Router();
 
 // Authentication and authorization-related routes.
-userRouter.post("/signup", authController.signUp);
-userRouter.post("/login", authController.login);
-userRouter.post("/forgotPassword", authController.forgotPassword);
+userRouter.post('/signup', authController.signUp);
+userRouter.post('/login', authController.login);
+userRouter.post('/forgotPassword', authController.forgotPassword);
 userRouter.patch(
-  "/resetPassword/:passwordResetToken",
+  '/resetPassword/:passwordResetToken',
   authController.resetPassword
 );
 userRouter.post(
-  "/updateMyPassword",
+  '/updateMyPassword',
   authController.protectRoute,
   authController.updateMyPassword
 );
@@ -22,23 +22,23 @@ userRouter.post(
 // The authentication is in different controller to
 // separate the routes that needs token based logic.
 userRouter.post(
-  "/updateMyProfile",
+  '/updateMyProfile',
   authController.protectRoute,
   userController.updateMyProfile
 );
 
 userRouter.delete(
-  "/deleteMyProfile",
+  '/deleteMyProfile',
   authController.protectRoute,
   userController.deleteMyProfile
 );
 
 userRouter
-  .route("/")
+  .route('/')
   .get(userController.getAllUsers)
   .post(userController.createUser);
 userRouter
-  .route("/:id")
+  .route('/:id')
   .get(userController.getUser)
   .patch(userController.updateUser)
   .delete(userController.deleteUser);

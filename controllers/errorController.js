@@ -1,4 +1,4 @@
-const AppError = require("../utils/appError");
+const AppError = require('../utils/appError');
 
 const handleCastErrorDB = (err) => {
   const message = `Invalid ${err.path}: ${err.value}`;
@@ -13,17 +13,17 @@ const handleDuplicateFieldsDB = (err) => {
 
 const handleValidationErrorDB = (err) => {
   const errors = Object.values(err.errors).map((el) => el.message);
-  const message = `Invalid input data. ${errors.join(" ")}`;
+  const message = `Invalid input data. ${errors.join(' ')}`;
   return new AppError(message, 400);
 };
 
 const handleJsonWebTokenError = () => {
-  const message = "Invalid token! Please login again!";
+  const message = 'Invalid token! Please login again!';
   return new AppError(message, 401);
 };
 
 const handleTokenExpiredError = () => {
-  const message = "Token already expired! Please login again!";
+  const message = 'Token already expired! Please login again!';
   return new AppError(message, 401);
 };
 
@@ -47,11 +47,11 @@ const sendErrorProd = (err, res) => {
   }
   // Programming or unknown error: don't leak to client.
   else {
-    console.error("ERROR", err);
+    console.error('ERROR', err);
 
     res.status(500).json({
-      status: "error",
-      message: "Something went wrong...",
+      status: 'error',
+      message: 'Something went wrong...',
     });
   }
 };
@@ -59,13 +59,13 @@ const sendErrorProd = (err, res) => {
 const errorController = (err, req, res, next) => {
   // Add defaults.
   err.statusCode = err.statusCode || 500;
-  err.status = err.status || "error";
+  err.status = err.status || 'error';
 
   const mode = process.env.NODE_ENV;
 
-  if (mode === "development") {
+  if (mode === 'development') {
     sendErrorDev(err, res);
-  } else if (mode === "production") {
+  } else if (mode === 'production') {
     // Spread operator does not work, it doesn't copy
     // the properties and methods of the original error object.
     //let modifiedError = { ...err };
@@ -75,15 +75,15 @@ const errorController = (err, req, res, next) => {
     // Add a condition for a specific error that you expect.
     // Modify it using the AppError class then send it back
     // to the client in a graceful way.
-    if (err.name === "CastError") {
+    if (err.name === 'CastError') {
       modifiedError = handleCastErrorDB(err);
     } else if (err.code === 11000) {
       modifiedError = handleDuplicateFieldsDB(err);
-    } else if (err.name === "ValidationError") {
+    } else if (err.name === 'ValidationError') {
       modifiedError = handleValidationErrorDB(err);
-    } else if (err.name === "JsonWebTokenError") {
+    } else if (err.name === 'JsonWebTokenError') {
       modifiedError = handleJsonWebTokenError();
-    } else if (err.name === "TokenExpiredError") {
+    } else if (err.name === 'TokenExpiredError') {
       modifiedError = handleTokenExpiredError();
     }
 

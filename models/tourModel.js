@@ -1,15 +1,15 @@
-const mongoose = require("mongoose");
-const slugify = require("slugify");
-const validator = require("validator");
+const mongoose = require('mongoose');
+const slugify = require('slugify');
+const validator = require('validator');
 
 const tourSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "A tour must have a name."],
+      required: [true, 'A tour must have a name.'],
       unique: true,
-      minlength: [10, "A tour must have minimum of 10 characters."],
-      maxlength: [20, "A tour must have maximum of 20 characters."],
+      minlength: [10, 'A tour must have minimum of 10 characters.'],
+      maxlength: [20, 'A tour must have maximum of 20 characters.'],
       //validate: [validator.isAlpha, "Tour name must only contain characters."],
     },
     slug: {
@@ -17,25 +17,25 @@ const tourSchema = new mongoose.Schema(
     },
     duration: {
       type: Number,
-      required: [true, "A tour must have a duration."],
+      required: [true, 'A tour must have a duration.'],
     },
     maxGroupSize: {
       type: Number,
-      required: [true, "A tour must have a max group size."],
+      required: [true, 'A tour must have a max group size.'],
     },
     difficulty: {
       type: String,
-      required: [true, "A tour must have a difficulty."],
+      required: [true, 'A tour must have a difficulty.'],
       enum: {
-        values: ["easy", "medium", "difficult"],
-        message: "Difficulty must easy, medium, or difficult.",
+        values: ['easy', 'medium', 'difficult'],
+        message: 'Difficulty must easy, medium, or difficult.',
       },
     },
     ratingsAverage: {
       type: Number,
       default: 0.0,
-      min: [1, "Rating should be greater than zero."],
-      max: [5, "Rating should be lower than 5."],
+      min: [1, 'Rating should be greater than zero.'],
+      max: [5, 'Rating should be lower than 5.'],
     },
     ratingsQuantity: {
       type: Number,
@@ -43,7 +43,7 @@ const tourSchema = new mongoose.Schema(
     },
     price: {
       type: Number,
-      required: [true, "A tour must have a price."],
+      required: [true, 'A tour must have a price.'],
     },
     discount: {
       type: Number,
@@ -54,17 +54,17 @@ const tourSchema = new mongoose.Schema(
           return this.price >= val;
         },
         message:
-          "Discount price ({VALUE}) should be below or equal to the regular price.",
+          'Discount price ({VALUE}) should be below or equal to the regular price.',
       },
     },
     summary: {
       type: String,
-      required: [true, "A tour must have a summary."],
+      required: [true, 'A tour must have a summary.'],
       trim: true,
     },
     imageCover: {
       type: String,
-      required: [true, "A tour must have an image."],
+      required: [true, 'A tour must have an image.'],
     },
     images: [String],
     createdAt: {
@@ -79,7 +79,7 @@ const tourSchema = new mongoose.Schema(
     },
     startLocation: {
       // GeoJSON
-      type: { type: String, default: "Point", enum: ["Point"] },
+      type: { type: String, default: 'Point', enum: ['Point'] },
       coordinates: [Number],
       address: String,
       description: String,
@@ -87,7 +87,7 @@ const tourSchema = new mongoose.Schema(
     locations: [
       {
         // GeoJSON
-        type: { type: String, default: "Point", enum: ["Point"] },
+        type: { type: String, default: 'Point', enum: ['Point'] },
         coordinates: [Number],
         address: String,
         description: String,
@@ -105,29 +105,30 @@ const tourSchema = new mongoose.Schema(
   }
 );
 
-// Virtual property.
-tourSchema.virtual("durationWeeks").get(function () {
+// VIRTUAL PROPERTY.
+tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
 });
 
-// Document middleware.
-// It runs before the .save() command and .create() method.
-tourSchema.pre("save", function (next) {
+// DOCUMENT MIDDLEWARE.
+// It runs before or after the .save() and .create() method.
+tourSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
   next();
 });
 
-tourSchema.post("save", function (doc, next) {
-  console.log("Document has been created!");
+tourSchema.post('save', function (doc, next) {
+  console.log('Document has been created!');
   next();
 });
 
-tourSchema.post("save", function (doc, next) {
+tourSchema.post('save', function (doc, next) {
   console.log(this);
   next();
 });
 
-// Query middleware.
+// QUERY MIDDLEWARE.
+// It runs before or after query.
 tourSchema.pre(/^find/, function (next) {
   // Running the query automatically applies before
   // going into the next middleware or in the controllers.
@@ -142,14 +143,16 @@ tourSchema.post(/^find/, function (doc, next) {
   next();
 });
 
-// Aggregation middleware.
-tourSchema.pre("aggregate", function (next) {
+// AGGREGATION MIDDLEWARE.
+// It runs before or after aggragation has been performed.
+tourSchema.pre('aggregate', function (next) {
   this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
 
   console.log(this.pipeline());
   next();
 });
 
-const Tour = mongoose.model("Tour", tourSchema);
+// The Tour model.
+const Tour = mongoose.model('Tour', tourSchema);
 
 module.exports = Tour;

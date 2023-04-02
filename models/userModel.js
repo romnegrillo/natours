@@ -1,27 +1,27 @@
-const crypto = require("crypto");
-const mongoose = require("mongoose");
-const validator = require("validator");
-const bcrypt = require("bcryptjs");
+const crypto = require('crypto');
+const mongoose = require('mongoose');
+const validator = require('validator');
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, "Please tell us your name!"],
+    required: [true, 'Please tell us your name!'],
   },
   email: {
     type: String,
-    required: [true, "Please tell us your email!"],
+    required: [true, 'Please tell us your email!'],
     unique: true,
     lowercase: true,
-    validate: [validator.isEmail, "Invalid email address!"],
+    validate: [validator.isEmail, 'Invalid email address!'],
   },
   photo: {
     type: String,
   },
   role: {
     type: String,
-    enum: ["user", "guide", "lead-guide", "admin"],
-    default: "user",
+    enum: ['user', 'guide', 'lead-guide', 'admin'],
+    default: 'user',
   },
   password: {
     type: String,
@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema({
       validator: function (currentValue) {
         return currentValue === this.password;
       },
-      message: "Password confirmation is not the same as password!",
+      message: 'Password confirmation is not the same as password!',
     },
   },
   passwordChangedAt: {
@@ -50,10 +50,14 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-// Called when before save() or create() in User model in the controller.
-userSchema.pre("save", async function (next) {
+// DOCUMENT MIDDLEWARE.
+// It runs before or after the .save() and .create() method.
+userSchema.pre('save', async function (next) {
+  // Hash the password everytime a new user is created
+  // or existing user modified the password.
+
   // Only run this function if password is modified.
-  if (!this.isModified("password")) {
+  if (!this.isModified('password')) {
     return next();
   }
 
@@ -64,10 +68,32 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-// Function to check if input password is the same
-// as the password in the database. This can placed in the
-// cotroller but as always, follow "Fat controllers thin views."
+userSchema.pre('save', function (next) {
+  // If password is changed, update the passwordChangedAt time property.
+  if (!this.isModified('password') || this.isNew) {
+    return next();
+  }
+
+  this.passwordChangedAt = Date.now();
+
+  next();
+});
+
+userSchema.pre(/^find/, function (next) {
+  // Only return the active users. Becase when we delete users,
+  // we don't actually delete it, we set isActive to false.
+  this.find({ isActive: true });
+
+  next();
+});
+
+// INSTANCE METHODS.
+// Can be directly called by the query instance in
+// the controllers.
 userSchema.methods.isPasswordCorrect = async function (
+  // Function to check if input password is the same
+  // as the password in the database. This can placed in the
+  // cotroller but as always, follow "Fat controllers thin views."
   inputPassword,
   actualPassword
 ) {
@@ -96,11 +122,11 @@ userSchema.methods.isPasswordChanged = async function (jwtTimeStamp) {
 
 userSchema.methods.createRandomResetToken = function () {
   // Generate random string and encrypt it.
-  const resetToken = crypto.randomBytes(32).toString("hex");
+  const resetToken = crypto.randomBytes(32).toString('hex');
   this.passwordResetToken = crypto
-    .createHash("sha256")
+    .createHash('sha256')
     .update(resetToken)
-    .digest("hex");
+    .digest('hex');
 
   // Make the reset password to be available 10 minutes only.
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
@@ -108,23 +134,7 @@ userSchema.methods.createRandomResetToken = function () {
   return resetToken;
 };
 
-// If password is changed, update the passwordChangedAt time property.
-userSchema.pre("save", function (next) {
-  if (!this.isModified("password") || this.isNew) {
-    return next();
-  }
-
-  this.passwordChangedAt = Date.now();
-
-  next();
-});
-
-userSchema.pre(/^find/, function (next) {
-  this.find({ isActive: true });
-
-  next();
-});
-
-const User = mongoose.model("User", userSchema);
+// THe User model.
+const User = mongoose.model('User', userSchema);
 
 module.exports = User;

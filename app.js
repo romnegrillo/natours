@@ -1,15 +1,15 @@
-const express = require("express");
-const morgan = require("morgan");
-const rateLimit = require("express-rate-limit");
-const helmet = require("helmet");
-const mongoSanitize = require("express-mongo-sanitize");
-const xss = require("xss-clean");
-const globalErrorHandler = require("./controllers/errorController");
-const AppError = require("./utils/appError");
+const express = require('express');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const globalErrorHandler = require('./controllers/errorController');
+const AppError = require('./utils/appError');
 
 // Import routes.
-const tourRouter = require("./routes/tourRoutes");
-const userRouter = require("./routes/userRoutes");
+const tourRouter = require('./routes/tourRoutes');
+const userRouter = require('./routes/userRoutes');
 
 // App instance.
 const app = express();
@@ -21,17 +21,17 @@ app.use(helmet());
 
 // 2.) Morgan for logging requests.
 app.use(express.json());
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
 }
 
 // 3.) Rate limiting.
 const limiter = rateLimit({
   max: 10,
   windowMs: 60 * 60 * 100, // in milliseconds
-  message: "Too many requests from this IP, please try again in an hour.",
+  message: 'Too many requests from this IP, please try again in an hour.',
 });
-app.use("/api/v1", limiter);
+app.use('/api/v1', limiter);
 
 // 4.) Serving static files.
 app.use(express.static(`${__dirname}/dev-data/`));
@@ -44,16 +44,16 @@ app.use(xss());
 
 // 7.) Test middleware.
 app.use((req, res, next) => {
-  console.log("Hello from middleware.");
+  console.log('Hello from middleware.');
   next();
 });
 
 // Routers.
-app.use("/api/v1/tours", tourRouter);
-app.use("/api/v1/users", userRouter);
+app.use('/api/v1/tours', tourRouter);
+app.use('/api/v1/users', userRouter);
 
 // Route that will match if it doesn't match anything above.
-app.all("*", (req, res, next) => {
+app.all('*', (req, res, next) => {
   // res.status(404).json({
   //   status: "fail",
   //   message: `Can't find ${req.url} on this server!`,
