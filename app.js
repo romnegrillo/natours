@@ -10,6 +10,7 @@ const AppError = require('./utils/appError');
 // Import routes.
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
+const reviewRouter = require('./routes/reviewRoutes');
 
 // App instance.
 const app = express();
@@ -51,6 +52,7 @@ app.use((req, res, next) => {
 // Routers.
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/reviews', reviewRouter);
 
 // Route that will match if it doesn't match anything above.
 app.all('*', (req, res, next) => {
