@@ -7,6 +7,7 @@ exports.getAllReviews = catchAsync(async (req, res) => {
 
   res.status(200).json({
     status: 'success',
+    length: reviews.length,
     data: {
       reviews: reviews,
     },
@@ -25,14 +26,15 @@ exports.getReview = catchAsync(async (req, res) => {
 });
 
 exports.createReview = catchAsync(async (req, res) => {
-  const review = filterObj(req.body, 'review', 'rating', 'tour', 'user');
+  const newReviewObj = filterObj(req.body, 'review', 'rating', 'tour');
+  newReviewObj.user = req.user._id;
 
-  const newReview = await Review.create(review);
-  console.log(newReview);
+  const review = await Review.create(newReviewObj);
+
   res.status(200).json({
     status: 'success',
     data: {
-      review: newReview,
+      review: review,
     },
   });
 });

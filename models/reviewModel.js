@@ -23,7 +23,6 @@ const reviewSchema = new mongoose.Schema(
       ref: 'Tour',
       required: [true, 'Review must belong to a tour.'],
     },
-
     user: {
       type: mongoose.Schema.ObjectId,
       ref: 'User',
@@ -42,8 +41,11 @@ const reviewSchema = new mongoose.Schema(
 
 // QUERY MIDDLEWARE.
 reviewSchema.pre(/^find/, function (next) {
+  // Populate the referenced document.
+
   this.populate({
-    path: 'tour user',
+    path: 'user',
+    select: 'name photo',
   });
 
   next();
